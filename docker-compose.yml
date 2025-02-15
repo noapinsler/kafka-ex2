@@ -19,7 +19,7 @@ services:
       - "9092:9092"
 
   producer:
-    image: noapimta/kafka-producer:1.0
+    image: noapimta/kafka-producer:2.0
     container_name: kafka_producer
     ports:
       - "5000:5000"
@@ -27,6 +27,7 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       - kafka
+      - zookeeper
 
 
 volumes:

@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from kafka import KafkaProducer
 import json
@@ -15,10 +14,23 @@ app = Flask(__name__)
 
 # Kafka connection details
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
-producer = KafkaProducer(
-  bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-  value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+
+# Retry Kafka connection logic
+producer = None
+for attempt in range(10):
+  try:
+    producer = KafkaProducer(
+      bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+      value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+    logging.info("Kafka producer created successfully.")
+    break
+  except Exception as e:
+    logging.warning(f"Attempt {attempt + 1}/10: Failed to connect to Kafka. Retrying in 5 seconds...")
+    time.sleep(5)
+
+if producer is None:
+  raise Exception("Kafka producer could not connect after several retries.")
 
 KAFKA_TOPIC = 'order_updates'
 
